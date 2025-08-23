@@ -1,0 +1,3 @@
+SALTING --> password salting is a technique to protect passwords stored in databases by adding a string of 32 or more charaters and then hashing them.
+
+A web application needs the ability to identify users as they browse from page to page. this series of requests and responses, each associated with the same user, is known as session.
