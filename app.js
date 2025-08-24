@@ -302,7 +302,7 @@
 //     console.log("Session ID:", req.sessionID);
 //     console.log("Authenticated:", req.isAuthenticated());
 //     console.log("User:", req.user ? req.user.username : "No user");
-    
+
 //     res.locals.success = req.flash("success");
 //     res.locals.error = req.flash("error");
 //     res.locals.currUser = req.user; // This makes currUser available in templates
@@ -344,7 +344,7 @@
 
 
 
-if(process.env.NODE_ENV !="production"){
+if (process.env.NODE_ENV != "production") {
     require('dotenv').config();
 }
 
@@ -365,6 +365,7 @@ const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 
 // Middleware setup
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -376,7 +377,7 @@ const userRouter = require("./routes/user.js");
 const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
 
 // Database connection with proper error handling
-async function main(){
+async function main() {
     try {
         await mongoose.connect(dbUrl, {
             useNewUrlParser: true,
@@ -387,12 +388,15 @@ async function main(){
         console.log("Connected to MongoDB successfully");
     } catch (err) {
         console.log("MongoDB connection error:", err.message);
-        
+
         // Fallback to local MongoDB if Atlas fails
         try {
             const localUrl = "mongodb://127.0.0.1:27017/wanderlust";
             await mongoose.connect(localUrl);
             console.log("Connected to local MongoDB as fallback");
+            // Add this after mongoose.connect in your main() function
+            console.log("NODE_ENV:", process.env.NODE_ENV);
+            console.log("Database connected to:", mongoose.connection.host);
         } catch (localErr) {
             console.log("Local MongoDB also failed:", localErr.message);
             process.exit(1); // Exit if no database connection
@@ -405,10 +409,10 @@ main();
 // View engine setup
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.engine('ejs', ejsMate);
-app.use(express.static(path.join(__dirname,"/public")));
+app.use(express.static(path.join(__dirname, "/public")));
 
 // Session store setup - use local MongoDB if Atlas fails
 const store = MongoStore.create({
@@ -424,22 +428,40 @@ store.on("error", (err) => {
 });
 
 // Session configuration
+// const sessionOptions = {
+//     store,
+//     secret: process.env.SECRET ,
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+//         maxAge: 7 * 24 * 60 * 60 * 1000,
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production"
+//     },
+// };
+
+
 const sessionOptions = {
     store,
-    secret: process.env.SECRET ,
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production"
+        // Trust the reverse proxy (Render) to handle HTTPS
+        secure: process.env.NODE_ENV === "production",
+        // Add this line for production environments
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
     },
 };
 
 // Session middleware
 app.use(session(sessionOptions));
 app.use(flash());
+
 
 // Passport initialization
 app.use(passport.initialize());
@@ -453,7 +475,7 @@ app.use((req, res, next) => {
     console.log("Session ID:", req.sessionID);
     console.log("Authenticated:", req.isAuthenticated());
     console.log("User:", req.user ? req.user.username : "No user");
-    
+
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
     res.locals.currUser = req.user; // This makes currUser available in templates
@@ -471,8 +493,8 @@ app.all(/(.*)/, (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-    let {statusCode = 500, message = "something went wrong!"} = err;
-    res.status(statusCode).render("error.ejs", {message});
+    let { statusCode = 500, message = "something went wrong!" } = err;
+    res.status(statusCode).render("error.ejs", { message });
 });
 
 // app.listen(8080, () => {
@@ -481,5 +503,5 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 8080;  // 3000 for local, Render will replace it
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+    console.log(`Server running on port ${port}`);
 });
