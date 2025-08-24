@@ -344,6 +344,175 @@
 
 
 
+// if (process.env.NODE_ENV != "production") {
+//     require('dotenv').config();
+// }
+
+// const express = require("express");
+// const app = express();
+// const mongoose = require("mongoose");
+// const path = require('path');
+// const Listing = require("./models/listing.js");
+// const methodOverride = require("method-override");
+// const ejsMate = require("ejs-mate");
+// const wrapAsync = require("./utils/wrapAsync.js");
+// const ExpressError = require("./utils/ExpressError.js");
+// const session = require("express-session");
+// const MongoStore = require('connect-mongo');
+// const flash = require("connect-flash");
+// const passport = require("passport");
+// const LocalStrategy = require("passport-local");
+// const User = require("./models/user.js");
+
+// // Middleware setup
+// app.set('trust proxy', 1);
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+// const listingRouter = require("./routes/listing.js");
+// const reviewRouter = require("./routes/review.js");
+// const userRouter = require("./routes/user.js");
+
+// // FIX: Add fallback to local MongoDB if Atlas fails
+// const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
+
+// // Database connection with proper error handling
+// async function main() {
+//     try {
+//         await mongoose.connect(dbUrl, {
+//             useNewUrlParser: true,
+//             useUnifiedTopology: true,
+//             serverSelectionTimeoutMS: 10000,
+//             socketTimeoutMS: 45000,
+//         });
+//         console.log("Connected to MongoDB successfully");
+//     } catch (err) {
+//         console.log("MongoDB connection error:", err.message);
+
+//         // Fallback to local MongoDB if Atlas fails
+//         try {
+//             const localUrl = "mongodb://127.0.0.1:27017/wanderlust";
+//             await mongoose.connect(localUrl);
+//             console.log("Connected to local MongoDB as fallback");
+//             // Add this after mongoose.connect in your main() function
+//             console.log("NODE_ENV:", process.env.NODE_ENV);
+//             console.log("Database connected to:", mongoose.connection.host);
+//         } catch (localErr) {
+//             console.log("Local MongoDB also failed:", localErr.message);
+//             process.exit(1); // Exit if no database connection
+//         }
+//     }
+// }
+
+// main();
+
+// // View engine setup
+// app.set("view engine", "ejs");
+// app.set("views", path.join(__dirname, "views"));
+// app.use(express.urlencoded({ extended: true }));
+// app.use(methodOverride("_method"));
+// app.engine('ejs', ejsMate);
+// app.use(express.static(path.join(__dirname, "/public")));
+
+// // Session store setup - use local MongoDB if Atlas fails
+// const store = MongoStore.create({
+//     mongoUrl: dbUrl,
+//     crypto: {
+//         secret: process.env.SECRET,
+//     },
+//     touchAfter: 24 * 3600,
+// });
+
+// store.on("error", (err) => {
+//     console.log("ERROR IN MONGO SESSION STORE", err);
+// });
+
+// // Session configuration
+// // const sessionOptions = {
+// //     store,
+// //     secret: process.env.SECRET ,
+// //     resave: false,
+// //     saveUninitialized: false,
+// //     cookie: {
+// //         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+// //         maxAge: 7 * 24 * 60 * 60 * 1000,
+// //         httpOnly: true,
+// //         secure: process.env.NODE_ENV === "production"
+// //     },
+// // };
+
+
+// const sessionOptions = {
+//     store,
+//     secret: process.env.SECRET,
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: {
+//         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+//         maxAge: 7 * 24 * 60 * 60 * 1000,
+//         httpOnly: true,
+//         // Trust the reverse proxy (Render) to handle HTTPS
+//         secure: process.env.NODE_ENV === "production",
+//         // Add this line for production environments
+//         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+//     },
+// };
+
+// // Session middleware
+// app.use(session(sessionOptions));
+// app.use(flash());
+
+
+// // Passport initialization
+// app.use(passport.initialize());
+// app.use(passport.session());
+// passport.use(new LocalStrategy(User.authenticate()));
+// passport.serializeUser(User.serializeUser());
+// passport.deserializeUser(User.deserializeUser());
+
+// // CRITICAL: This middleware must come AFTER passport but BEFORE routes
+// app.use((req, res, next) => {
+//     console.log("Session ID:", req.sessionID);
+//     console.log("Authenticated:", req.isAuthenticated());
+//     console.log("User:", req.user ? req.user.username : "No user");
+
+//     res.locals.success = req.flash("success");
+//     res.locals.error = req.flash("error");
+//     res.locals.currUser = req.user; // This makes currUser available in templates
+//     next();
+// });
+
+// // Routes
+// app.use("/listings", listingRouter);
+// app.use("/listings/:id/reviews", reviewRouter);
+// app.use("/", userRouter);
+
+// // Error handling
+// app.all(/(.*)/, (req, res, next) => {
+//     next(new ExpressError(404, "page not found!!"));
+// });
+
+// app.use((err, req, res, next) => {
+//     let { statusCode = 500, message = "something went wrong!" } = err;
+//     res.status(statusCode).render("error.ejs", { message });
+// });
+
+// // app.listen(8080, () => {
+// //     console.log("server is running on port 8080");
+// // });
+
+// const port = process.env.PORT || 8080;  // 3000 for local, Render will replace it
+// app.listen(port, () => {
+//     console.log(`Server running on port ${port}`);
+// });
+
+
+
+
+
+
+
+
 if (process.env.NODE_ENV != "production") {
     require('dotenv').config();
 }
@@ -363,6 +532,7 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
+const { saveRedirectUrl } = require("./middleware.js"); // ADD THIS
 
 // Middleware setup
 app.set('trust proxy', 1);
@@ -373,38 +543,36 @@ const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
 
-// FIX: Add fallback to local MongoDB if Atlas fails
 const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
 
 // Database connection with proper error handling
 async function main() {
     try {
         await mongoose.connect(dbUrl, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            // REMOVE DEPRECATED OPTIONS:
             serverSelectionTimeoutMS: 10000,
             socketTimeoutMS: 45000,
         });
-        console.log("Connected to MongoDB successfully");
+        console.log("=== DATABASE CONNECTION SUCCESS ===");
+        console.log("NODE_ENV:", process.env.NODE_ENV);
+        console.log("Database host:", mongoose.connection.host);
+        console.log("Database name:", mongoose.connection.name);
+        console.log("================================");
     } catch (err) {
-        console.log("MongoDB connection error:", err.message);
-
-        // Fallback to local MongoDB if Atlas fails
+        console.log("MongoDB Atlas connection error:", err.message);
         try {
             const localUrl = "mongodb://127.0.0.1:27017/wanderlust";
             await mongoose.connect(localUrl);
+            console.log("=== FALLBACK TO LOCAL DATABASE ===");
             console.log("Connected to local MongoDB as fallback");
-            // Add this after mongoose.connect in your main() function
             console.log("NODE_ENV:", process.env.NODE_ENV);
-            console.log("Database connected to:", mongoose.connection.host);
+            console.log("================================");
         } catch (localErr) {
             console.log("Local MongoDB also failed:", localErr.message);
-            process.exit(1); // Exit if no database connection
+            process.exit(1);
         }
     }
 }
-
-main();
 
 // View engine setup
 app.set("view engine", "ejs");
@@ -414,7 +582,7 @@ app.use(methodOverride("_method"));
 app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
 
-// Session store setup - use local MongoDB if Atlas fails
+// Session store setup
 const store = MongoStore.create({
     mongoUrl: dbUrl,
     crypto: {
@@ -427,41 +595,24 @@ store.on("error", (err) => {
     console.log("ERROR IN MONGO SESSION STORE", err);
 });
 
-// Session configuration
-// const sessionOptions = {
-//     store,
-//     secret: process.env.SECRET ,
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-//         maxAge: 7 * 24 * 60 * 60 * 1000,
-//         httpOnly: true,
-//         secure: process.env.NODE_ENV === "production"
-//     },
-// };
-
-
+// Session configuration - FIXED
 const sessionOptions = {
     store,
     secret: process.env.SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: false, // CHANGED from true to false
     cookie: {
         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        // Trust the reverse proxy (Render) to handle HTTPS
-        secure: process.env.NODE_ENV === "production",
-        // Add this line for production environments
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+        secure: true, // FORCE true in production
+        sameSite: 'none' // REQUIRED for cross-site
     },
 };
 
 // Session middleware
 app.use(session(sessionOptions));
 app.use(flash());
-
 
 // Passport initialization
 app.use(passport.initialize());
@@ -470,17 +621,23 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// CRITICAL: This middleware must come AFTER passport but BEFORE routes
+// Custom middleware - ADD SESSION DEBUGGING
 app.use((req, res, next) => {
+    console.log("=== SESSION DEBUG ===");
+    console.log("Path:", req.path);
     console.log("Session ID:", req.sessionID);
     console.log("Authenticated:", req.isAuthenticated());
     console.log("User:", req.user ? req.user.username : "No user");
-
+    console.log("=====================");
+    
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
-    res.locals.currUser = req.user; // This makes currUser available in templates
+    res.locals.currUser = req.user;
     next();
 });
+
+// ADD THIS MIDDLEWARE - CRITICAL FOR REDIRECTS
+app.use(saveRedirectUrl);
 
 // Routes
 app.use("/listings", listingRouter);
@@ -497,11 +654,14 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render("error.ejs", { message });
 });
 
-// app.listen(8080, () => {
-//     console.log("server is running on port 8080");
-// });
-
-const port = process.env.PORT || 8080;  // 3000 for local, Render will replace it
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+// START SERVER ONLY AFTER DATABASE CONNECTION
+main()
+    .then(() => {
+        const port = process.env.PORT || 8080;
+        app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+        });
+    })
+    .catch(err => {
+        console.log("Failed to start application:", err);
+    });
