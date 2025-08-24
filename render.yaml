@@ -2,7 +2,7 @@ services:
   - type: web
     name: majorproject
     env: node
-    rootDir: .
+    rootDir: majorproject
     buildCommand: "npm install"
     startCommand: "npm start"
     plan: free
