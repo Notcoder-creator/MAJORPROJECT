@@ -253,8 +253,7 @@ const upload = multer({storage});
 
 
 
-// NEW route - must come first
-router.get("/new", isLoggedIn, listingController.renderNewForm);
+
 
 
 
@@ -264,7 +263,8 @@ router.route("/")
     .post(isLoggedIn, validateListing,upload.single('listing[image]'), wrapAsync(listingController.createListing));
     
 
-
+// NEW route - must come first
+router.get("/new", isLoggedIn, listingController.renderNewForm);
 
 
 
