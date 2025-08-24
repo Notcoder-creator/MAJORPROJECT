@@ -475,6 +475,11 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render("error.ejs", {message});
 });
 
+// app.listen(8080, () => {
+//     console.log("server is running on port 8080");
+// });
+
+const port = process.env.PORT || 8080;  // 3000 for local, Render will replace it
 app.listen(8080, () => {
-    console.log("server is running on port 8080");
+  console.log(`Server running on port ${8080}`);
 });
