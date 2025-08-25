@@ -19,6 +19,7 @@ module.exports.signup = async(req,res)=>{
             if(err){
                 return next(err);
             }
+            console.log('Signup req.user:', req.user);
             req.flash("success", "user is registered successfully!!");
             res.redirect("/listings");
         });
@@ -36,6 +37,7 @@ module.exports.renderLoginForm = (req,res)=>{
 };
 
 module.exports.login=async(req,res)=>{
+    console.log('Login req.user:', req.user);
     req.flash("success","welcome to wanderlust you are logged in!");
     let redirectUrl = res.locals.redirectUrl || "/listings";
     res.redirect(redirectUrl);
